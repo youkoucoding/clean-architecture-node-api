@@ -1,6 +1,7 @@
 import Id from '../utils';
+import { Db } from 'mongodb';
 
-export default function makeCommentsDb({ makeDb }) {
+export default function makeCommentsDb({ makeDb }: { makeDb: () => Promise<Db> }) {
   return Object.freeze({
     findAll,
     findByHash,
@@ -20,7 +21,7 @@ export default function makeCommentsDb({ makeDb }) {
       ...found,
     }));
   }
-  async function findById({ id: _id }) {
+  async function findById({ id: _id }: { id: string }) {
     const db = await makeDb();
     const result = await db.collection('comments').find({ _id });
     const found = await result.toArray();
@@ -30,7 +31,13 @@ export default function makeCommentsDb({ makeDb }) {
     const { _id: id, ...info } = found[0];
     return { id, ...info };
   }
-  async function findByPostId({ postId, omitReplies = true }) {
+  async function findByPostId({
+    postId,
+    omitReplies = true,
+  }: {
+    postId: { replyToId: string | null };
+    omitReplies: boolean;
+  }) {
     const db = await makeDb();
     const query = { postId: postId };
     if (omitReplies) {
